@@ -591,7 +591,7 @@ function bankCharts(T,R,RS,X0,top,W,decide){
   h+=`<div class="abs" style="left:${x3}px;top:${top+36}px;width:${cw}px;white-space:normal">
     <div style="border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:20px 22px">
       <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)">${chHead}${ACC?'':' · '+dl(T.moment)}</div>
-      <div class="A" style="font-size:22px;font-weight:300;margin-top:8px;line-height:1.15">${ACC?RS.offer.t:T.calm(R).replace(/<\/?i>/g,'').split('. ')[0]}</div>
+      <div class="A" style="font-size:22px;font-weight:300;margin-top:8px;line-height:1.15">${ACC?RS.offer.t:T.calm(series(T,T.moment)).replace(/<\/?i>/g,'').split('. ')[0]}</div>
       <div style="font-size:15px;color:var(--mute);margin-top:8px;line-height:1.35">${ACC?RS.offer.x:RS.offer.t+' — '+RS.offer.x}</div>
       <div style="margin-top:14px;display:inline-flex;align-items:center;height:36px;padding:0 18px;border-radius:18px;border:1px solid rgba(255,255,255,.35);font-size:14px">${RS.offer.cta}</div>
     </div>
