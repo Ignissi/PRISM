@@ -177,17 +177,28 @@ const PROF={
   structure:{group:'Группа компаний',single:'Одна компания'},
   digital:{boss:'Альфа-Босс',ib:'Интернет-банк',mgr:'Через менеджера'}
 };
+/* главбух: только после решения финдиректора — сопровождение его продукта, без кредита */
+const ACC_T={
+ A:{t:'1С и автоплатежи',x:'Документы по отгрузкам «Ритму» и платёжки — из 1С, без ручного ввода.',cta:'Подключить',when:'сразу после заявки финдиректора',why:'факторинг просит документы по каждой отгрузке'},
+ B:{t:'Автопогашение кредитной линии',x:'Транши гасятся из поступлений сами — платёжки на погашение не нужны.',cta:'Включить',when:'сразу после заявки финдиректора',why:'линию берёт финдиректор, погашает — главбух'},
+ C:{t:'Платите целиком',x:'Короткий минус закроет овердрафт — дробить платёжки больше не нужно.',cta:'Понятно',when:'в день подключения овердрафта',why:'9 платёжек частями вместо 4 делал он'},
+ D:{t:'Запас подключён',x:'Отложенные платежи можно отправить. Запас погасится сам, когда заплатит «Ритм».',cta:'К платежам',when:'в день, когда финдиректор подключит запас',why:'он держал платёжки и ждал «Ритм»'},
+ E:{t:'Депозит до 21 декабря',x:'6,2 млн ₽ учтены в платёжном календаре и вернутся сами — искать их на счетах не нужно.',cta:'Понятно',when:'в день размещения',why:'чтобы не искал 6,2 млн на счетах'}
+};
 function resolve(T){
-  const P=S.profile, L=S.type; let o={...T.offer}; let product=T.product;
+  const P={...S.profile}, L=S.type; if(S.view==='cfo'&&P.role==='acc')P.role='cfo'; let o={...T.offer}; let product=T.product;
   if(P.industry==='agro'&&['A','C','D'].includes(L)){product='Льготный кредит под сезон';o={t:'Льготный кредит под сезонную закупку',x:'Ставка по программе Минсельхоза. Решение до начала посевной.',cta:'Посмотреть условия'};}
   if(P.industry==='ved'&&['A','C','D'].includes(L)){product='Финансирование импортного контракта';o={t:'Финансирование импортного контракта',x:'Оплата поставщику за рубеж — сразу, расчёт с вами — после поступления от «Ритма».',cta:'Посмотреть условия'};}
   if(P.industry==='manuf'&&L==='A'){o={...o,x:'Деньги за отгрузку — в день отгрузки. Сырьё закупаете без паузы.'};}
   let arg=P.role==='owner'?'рост: не замораживать оборот в отсрочке покупателей':P.role==='acc'?'операции: без ручного ввода и сверок':'ликвидность: разрыв закрыт заранее';
   let routed=null;
-  if(P.role==='acc'){routed=product;product='Интеграция с 1С и автоплатежи';o={t:'Интеграция с 1С и автоплатежи',x:'Платёжки без ручного ввода. Кредитное предложение направлено финансовому директору.',cta:'Подключить'};}
+  if(P.role==='acc'){const a=ACC_T[L];routed=product;product=a.t;o={t:a.t,x:a.x,cta:a.cta};}
   if(P.role==='owner'&&L==='A'){o={...o,x:'Отгружайте больше, не замораживая оборот в отсрочке покупателей.'};}
-  const addressee=P.structure==='group'?'финансовому директору казначейского центра — одно предложение на группу':'финансовому директору компании';
-  const ch={boss:['Альфа-Босс · строка в платёжном календаре','1 раз · повтор не раньше чем через 7 дней'],ib:['Баннер в интернет-банке + письмо','1 показ · письмо не чаще 1 раза в 60 дней'],mgr:['Звонок менеджера · Ольга Петрова','1 звонок · без рассылок']}[P.digital];
+  const whoD={cfo:'финансовому директору',owner:'собственнику',acc:'главному бухгалтеру'}[P.role];
+  const addressee=(P.structure==='group'?whoD+' казначейского центра — одно предложение на группу':whoD+' компании')+(P.role==='acc'?' · '+ACC_T[L].when+' · кредит — только финдиректору':'');
+  const dig=(P.role==='acc'&&P.digital==='boss')?'ib':P.digital;
+  let ch={boss:['Альфа-Босс · строка в платёжном календаре','1 раз · повтор не раньше чем через 7 дней'],ib:['Баннер в интернет-банке + письмо','1 показ · письмо не чаще 1 раза в 60 дней'],mgr:['Звонок менеджера · Ольга Петрова','1 звонок · без рассылок']}[dig];
+  if(P.role==='acc')ch=['Баннер в интернет-банке + письмо','1 раз'];
   if(!o.ghost&&P.role!=='acc')o.cta='Посмотреть условия';
   return {offer:o,product,arg,routed,addressee,channel:ch[0],freq:ch[1],limits:'не больше 1 нового предложения в 7 дней на человека и на группу · отказ одним нажатием'};
 }
@@ -237,7 +248,7 @@ function menu(){
   const T=TYPES[S.type], RS=resolve(T);
   return `<div class="menu" style="top:0">
     <div class="caps">Профиль клиента · вход</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:32px">${grp('industry','Отрасль')}${grp('role','Роль ЛПР')}${grp('structure','Структура бизнеса')}${grp('digital','Цифровая активность')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:32px">${grp('industry','Отрасль')}${grp('role','Роль получателя')}${grp('structure','Структура бизнеса')}${grp('digital','Цифровая активность')}</div>
     <div style="margin-top:26px;padding-top:20px;border-top:1px solid var(--hair)"><div class="caps">Что получит клиент · выход</div>
       <div style="margin-top:12px;display:grid;grid-template-columns:110px 1fr;row-gap:8px;font-size:15px;line-height:1.35">
         <span style="color:var(--mute)">Продукт</span><span>${RS.product}</span>
@@ -254,7 +265,7 @@ function sidebar(){
   const grp=(key,title)=>`<div class="sec"><div class="caps">${title}</div><div class="chips">${Object.entries(PROF[key]).map(([k,v])=>`<div class="chip ${S.profile[key]===k?'on':''}" data-on="S.profile.${key}='${k}';render()">${v}</div>`).join('')}</div></div>`;
   return `<div class="side">
     <div class="sec"><div class="caps">Как не платит · тип</div><div class="chips">${LETTERS.map(L=>`<div class="chip ty ${S.type===L?'on':''}" data-on="S.type='${L}';S.today=TYPES['${L}'].moment;S.stress=0;render()"><b style="font-weight:500">${L} · ${META[L].verb}</b><span>${dl(TYPES[L].moment)}</span></div>`).join('')}</div></div>
-    ${grp('industry','Отрасль')}${grp('role','Роль ЛПР')}${grp('structure','Структура')}${grp('digital','Цифровая активность')}
+    ${grp('industry','Отрасль')}${grp('role','Роль получателя')}${grp('structure','Структура')}${grp('digital','Цифровая активность')}
     <div style="position:absolute;left:0;bottom:22px;font-size:13px;color:var(--mute)">синтетические данные · прототип</div>
   </div>`;
 }
@@ -296,9 +307,9 @@ function submit(){ const RS=resolve(TYPES[S.type]); S.app={product:RS.product,da
 function hideOffer(){ S.hidden=true; S.flow=null; toast('Предложения скрыты для группы на 60 дней'); render(); }
 function sendOffer(){ S.view='cfo'; S.cfoTab='home'; S.hidden=false; S.app=null; S.today=TYPES[S.type].moment; S.flow=null; toast('Предложение отправлено. Так его видит финдиректор'); render(); }
 function signPay(i){ if(!S.signed.includes(i)){S.signed.push(i); toast('Платёж подписан');} render(); }
-function setProf(k,v){ S.profile[k]=v; S.pop=null; render(); }
+function setProf(k,v){ S.profile[k]=v; if(k==='role'&&v==='acc'&&S.profile.digital==='boss')S.profile.digital='ib'; S.pop=null; render(); }
 function togglePop(k){ S.pop=S.pop===k?null:k; render(); }
-function terms(){ return S.profile.role==='acc'?TERMS_ACC:TERMS[S.type]; }
+function terms(){ return (S.profile.role==='acc'&&S.view!=='cfo')?TERMS_ACC:TERMS[S.type]; }
 
 function rail(){
   const c=S.rail, Wd=c?84:272, T=TYPES[S.type], ph=phase(T,S.today);
@@ -505,12 +516,12 @@ function bank(){
      <div class="A" style="font-size:${val.length>18?30:38}px;font-weight:300;margin-top:10px;letter-spacing:-.012em;line-height:1.05;${red?'color:'+RED:''}">${val}</div>
      <div style="font-size:16px;margin-top:8px;line-height:1.3;color:var(--mute)">${sub}</div></div>`;
   // client profile from CRM — changing it changes the offer
-  const pf=[['industry','Отрасль'],['role','Роль ЛПР'],['structure','Структура'],['digital','Цифровая активность']];
+  const pf=[['industry','Отрасль'],['role','Роль получателя'],['structure','Структура'],['digital','Цифровая активность']];
   h+=`<div class="abs caps" style="left:${X0}px;top:104px">Карточка клиента · CRM · меняйте — предложение пересчитается</div>`;
   h+=`<div class="abs" style="left:${X0}px;top:126px;width:${W}px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;white-space:normal;z-index:5">${pf.map(([k,l])=>`<div class="prof" data-on="togglePop('${k}')"><div class="l">${l}</div><div class="v"><span>${PROF[k][S.profile[k]]}</span><span style="color:var(--mute)">▾</span></div>${S.pop===k?`<div class="pop">${Object.entries(PROF[k]).map(([kk,vv])=>`<div class="${S.profile[k]===kk?'on':''}" data-on="setProf('${k}','${kk}')">${vv}</div>`).join('')}</div>`:''}</div>`).join('')}</div>`;
   h+=col(X0,'When · когда рисунок изменился',dl(M.whenD,1),M.whenT);
   h+=col(X0+560,'How · как пережил разрыв',`${S.type} · ${M.verb}`,M.how);
-  h+=col(X0+1120,'What · что и когда',RS.product,`${dl(T.moment,1)} — ${decide[0]==='Говорить'?'говорим сегодня':decide[0].toLowerCase()+', '+decide[1]}`,true);
+  h+=col(X0+1120,'What · что и когда',RS.product,S.profile.role==='acc'?`главбуху — ${ACC_T[S.type].when}`:`${dl(T.moment,1)} — ${decide[0]==='Говорить'?'говорим сегодня':decide[0].toLowerCase()+', '+decide[1]}`,true);
   // ---- signals row
   const sig={
     A:[['62%','зависимость от «Ритма»'],['3 из 6','получателей сдвинуты · +7 дн'],['0,82','уверенность в типе · 4 цикла'],['42 ± 6','дней платит «Ритм» · договор 30'],['−3,0 · 11 дек','разрыв без продукта'],['8','клиентов ещё ждут «Ритм» · видит только банк']],
@@ -565,16 +576,18 @@ function bankCharts(T,R,RS,X0,top,W,decide){
     <div style="display:flex;gap:28px;margin-top:14px;align-items:flex-end"><div><div class="A" style="font-size:30px;font-weight:300">${score}</div><div style="font-size:13px;color:var(--mute)">вероятность отклика · модель</div></div><div><div class="A" style="font-size:22px;font-weight:300;color:var(--mute)">0,11</div><div style="font-size:13px;color:var(--mute)">база оптимизатора · в 3 раза ниже</div></div></div>
   </div>`;
   // ---- column 3: what goes out — exactly what the CFO will see
-  h+=sec(x3,'Что увидит финдиректор');
+  const RL=S.profile.role, ACC=RL==='acc';
+  h+=sec(x3,'Что увидит '+{cfo:'финдиректор',owner:'собственник',acc:'главбух'}[RL]);
+  const chHead=RS.channel.startsWith('Альфа-Босс')?'Альфа-Босс · платёжный календарь':RS.channel.startsWith('Баннер')?'Интернет-банк · баннер':'Звонок менеджера · сценарий';
   const cardH=170;
   h+=`<div class="abs" style="left:${x3}px;top:${top+36}px;width:${cw}px;white-space:normal">
     <div style="border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:20px 22px">
-      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)">Альфа-Босс · платёжный календарь · ${dl(T.moment)}</div>
-      <div class="A" style="font-size:22px;font-weight:300;margin-top:8px;line-height:1.15">${T.calm(R).replace(/<\/?i>/g,'').split('. ')[0]}</div>
-      <div style="font-size:15px;color:var(--mute);margin-top:8px;line-height:1.35">${RS.offer.t} — ${RS.offer.x}</div>
+      <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)">${chHead}${ACC?'':' · '+dl(T.moment)}</div>
+      <div class="A" style="font-size:22px;font-weight:300;margin-top:8px;line-height:1.15">${ACC?RS.offer.t:T.calm(R).replace(/<\/?i>/g,'').split('. ')[0]}</div>
+      <div style="font-size:15px;color:var(--mute);margin-top:8px;line-height:1.35">${ACC?RS.offer.x:RS.offer.t+' — '+RS.offer.x}</div>
       <div style="margin-top:14px;display:inline-flex;align-items:center;height:36px;padding:0 18px;border-radius:18px;border:1px solid rgba(255,255,255,.35);font-size:14px">${RS.offer.cta}</div>
     </div>
-    <div style="margin-top:14px;font-size:14px;color:var(--mute);line-height:1.5">${RS.channel.split(' · ')[0]} · ${RS.freq}<br>Лимит группы свободен · отказ одним нажатием · роль из CRM подтверждена</div>
+    <div style="margin-top:14px;font-size:14px;color:var(--mute);line-height:1.5">${RS.channel.split(' · ')[0]} · ${RS.freq}<br>${ACC?'Когда: '+ACC_T[L].when+'<br>Почему: '+ACC_T[L].why+'<br>Нет заявки финдиректора — ничего · кредит — только ЛПР':'Лимит группы свободен · отказ одним нажатием · роль из CRM подтверждена'}</div>
   </div>`;
   h+=`<div class="abs" style="left:${x3}px;top:1092px;width:${cw}px;display:flex;align-items:center;justify-content:flex-end;gap:26px">
       <span style="font-size:15px;color:var(--mute);cursor:pointer" data-on="toast('Тишина: предложений по группе нет 7 дней.')">Молчать</span>
