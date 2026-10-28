@@ -511,9 +511,9 @@ function bank(){
   const T=TYPES[S.type], R=series(T,S.today), ph=phase(T,S.today), M=META[S.type], RS=resolve(T);
   const X0=120, W=1680; let h='';
   const decide = ph==='silence'?['Молчать','клиент ждёт деньги — без рекламы']:ph==='speak'?['Говорить','сегодня, один раз']:ph==='wait'?['Ждать',`до ${dl(T.moment,1)}`]:['Пауза','повтор не раньше чем через 7 дней'];
-  const col=(x,lab,val,sub,red)=>`<div class="abs" style="left:${x}px;top:206px;width:520px;white-space:normal">
+  const col=(x,lab,val,sub,red)=>`<div class="abs" style="left:${x}px;top:206px;width:${x===X0+1120?660:520}px;white-space:normal">
      <div class="caps">${lab}</div>
-     <div class="A" style="font-size:${val.length>18?30:38}px;font-weight:300;margin-top:10px;letter-spacing:-.012em;line-height:1.05;${red?'color:'+RED:''}">${val}</div>
+     <div class="A" style="font-size:${val.length>26?26:val.length>18?30:38}px;font-weight:300;margin-top:10px;letter-spacing:-.012em;line-height:1.05;${red?'color:'+RED:''}">${val}</div>
      <div style="font-size:16px;margin-top:8px;line-height:1.3;color:var(--mute)">${sub}</div></div>`;
   // client profile from CRM — changing it changes the offer
   const pf=[['industry','Отрасль'],['role','Роль получателя'],['structure','Структура'],['digital','Цифровая активность']];
@@ -521,7 +521,14 @@ function bank(){
   h+=`<div class="abs" style="left:${X0}px;top:126px;width:${W}px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;white-space:normal;z-index:5">${pf.map(([k,l])=>`<div class="prof" data-on="togglePop('${k}')"><div class="l">${l}</div><div class="v"><span>${PROF[k][S.profile[k]]}</span><span style="color:var(--mute)">▾</span></div>${S.pop===k?`<div class="pop">${Object.entries(PROF[k]).map(([kk,vv])=>`<div class="${S.profile[k]===kk?'on':''}" data-on="setProf('${k}','${kk}')">${vv}</div>`).join('')}</div>`:''}</div>`).join('')}</div>`;
   h+=col(X0,'When · когда рисунок изменился',dl(M.whenD,1),M.whenT);
   h+=col(X0+560,'How · как пережил разрыв',`${S.type} · ${M.verb}`,M.how);
-  h+=col(X0+1120,'What · что и когда',RS.product,S.profile.role==='acc'?`главбуху — ${ACC_T[S.type].when}`:`${dl(T.moment,1)} — ${decide[0]==='Говорить'?'говорим сегодня':decide[0].toLowerCase()+', '+decide[1]}`,true);
+  const pill=(bg,fg,txt,bd)=>`<span style="display:inline-flex;align-items:center;gap:10px;height:40px;padding:0 18px;border-radius:20px;background:${bg};color:${fg};font-size:18px;font-weight:500;white-space:nowrap;${bd?'border:1.5px solid rgba(255,255,255,.45);':''}">${txt}</span>`;
+  const dot=c=>`<span style="width:10px;height:10px;border-radius:50%;background:${c};display:inline-block"></span>`;
+  const ST = S.profile.role==='acc' ? pill('transparent','#fff',`Главбуху — ${ACC_T[S.type].when}`,1)
+    : ph==='speak' ? pill(RED,'#fff',`${dot('#fff')}Говорим сегодня · ${dl(S.today,1)}`)
+    : ph==='silence' ? pill('transparent','#fff','Молчим — деньги в пути',1)
+    : ph==='wait' ? pill('transparent','#fff',`Ждём · говорим ${dl(T.moment,1)}`,1)
+    : (S.today<T.moment+7 ? pill('#fff','#0A0A0B',`Пауза до ${dl(T.moment+7,1)} · отправлено ${dl(T.moment,1)}`) : pill('transparent','#fff','Окно прошло — ждём следующий цикл',1));
+  h+=col(X0+1120,'What · что и когда',RS.product,`<div style="margin-top:6px">${ST}</div>`,true);
   // ---- signals row
   const sig={
     A:[['62%','зависимость от «Ритма»'],['3 из 6','получателей сдвинуты · +7 дн'],['0,82','уверенность в типе · 4 цикла'],['42 ± 6','дней платит «Ритм» · договор 30'],['−3,0 · 11 дек','разрыв без продукта'],['8','клиентов ещё ждут «Ритм» · видит только банк']],
@@ -542,6 +549,7 @@ function bank(){
 }
 
 function bankCharts(T,R,RS,X0,top,W,decide){
+  const ph=phase(T,S.today);
   // three questions the manager has: why now · what Alfa gains or loses · what exactly goes out
   const L=S.type; let h='';
   const cw=(W-2*48)/3;
@@ -587,12 +595,12 @@ function bankCharts(T,R,RS,X0,top,W,decide){
       <div style="font-size:15px;color:var(--mute);margin-top:8px;line-height:1.35">${ACC?RS.offer.x:RS.offer.t+' — '+RS.offer.x}</div>
       <div style="margin-top:14px;display:inline-flex;align-items:center;height:36px;padding:0 18px;border-radius:18px;border:1px solid rgba(255,255,255,.35);font-size:14px">${RS.offer.cta}</div>
     </div>
-    <div style="margin-top:14px;font-size:14px;color:var(--mute);line-height:1.5">${RS.channel.split(' · ')[0]} · ${RS.freq}<br>${ACC?'Когда: '+ACC_T[L].when+'<br>Почему: '+ACC_T[L].why+'<br>Нет заявки финдиректора — ничего · кредит — только ЛПР':'Лимит группы свободен · отказ одним нажатием · роль из CRM подтверждена'}</div>
+    <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px">${(ACC?[RS.channel.split(' · ')[0],'1 раз','кредит — только ЛПР']:[RS.channel.split(' · ')[0],RS.freq,'отказ в 1 клик']).map(c=>`<span style="display:inline-flex;align-items:center;height:34px;padding:0 14px;border:1.5px solid rgba(255,255,255,.35);border-radius:17px;font-size:15px;color:#fff;white-space:nowrap">${c}</span>`).join('')}</div>${ACC?`<div style="margin-top:10px;font-size:16px;line-height:1.4;color:#fff;opacity:.85">Почему: ${ACC_T[L].why}. Нет заявки финдиректора — ничего.</div>`:''}
   </div>`;
   h+=`<div class="abs" style="left:${x3}px;top:1092px;width:${cw}px;display:flex;align-items:center;justify-content:flex-end;gap:26px">
       <span style="font-size:15px;color:var(--mute);cursor:pointer" data-on="toast('Тишина: предложений по группе нет 7 дней.')">Молчать</span>
       <span style="font-size:15px;color:var(--mute);cursor:pointer" data-on="toast('Отложено до ${dl(T.moment+3,1)}')">Отложить</span>
-      <span data-on="sendOffer()" style="display:inline-flex;align-items:center;height:60px;padding:0 38px;border-radius:30px;background:#EF3124;color:#fff;font-size:18px;font-weight:500;cursor:pointer">Отправить предложение</span>
+      <span data-on="sendOffer()" style="display:inline-flex;align-items:center;height:60px;padding:0 38px;border-radius:30px;background:${(ph==='speak'&&!ACC)?'#EF3124':'#fff'};color:${(ph==='speak'&&!ACC)?'#fff':'#0A0A0B'};font-size:18px;font-weight:500;cursor:pointer">Отправить предложение</span>
   </div>`;
   return h;
 }
