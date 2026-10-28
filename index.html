@@ -16,9 +16,9 @@
   --red:#EF3124;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:#000;height:100%}
+html,body{background:#000;height:100%;width:100%;overflow:hidden}
 body{font-family:SB,system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;font-feature-settings:"tnum" 1,"lnum" 1;overflow:hidden}
-#stage{width:1920px;height:1200px;position:absolute;left:0;top:0;transform-origin:0 0;background:var(--bg);overflow:hidden}
+#stage{width:1920px;height:1200px;position:fixed;left:0;top:0;transform-origin:0 0;background:var(--bg);overflow:hidden}
 .A{font-family:SA}
 .top{position:absolute;left:0;top:0;width:1920px;height:84px;display:flex;align-items:center;padding:0 40px;box-shadow:0 1px 0 var(--hair);z-index:6;background:var(--bg)}
 .bseg{display:flex;background:rgba(255,255,255,.07);border-radius:24px;height:48px;padding:4px}
@@ -217,7 +217,7 @@ function series(T,today){
 }
 
 /* ---------------- state ---------------- */
-const S={view:'cfo',type:'A',today:0,stress:0,profile:{industry:'dist',role:'cfo',structure:'group',digital:'boss'},rail:false,cfoTab:'home',flow:null,backs:0,hint:false,draft:false,app:null,hidden:false,pop:null};
+const S={view:'cfo',type:'A',today:0,stress:0,profile:{industry:'dist',role:'cfo',structure:'group',digital:'boss'},rail:false,cfoTab:'home',flow:null,backs:0,hint:false,draft:false,app:null,hidden:false,pop:null,signed:[]};
 function parseHash(){const h=location.hash.slice(1).split('&');h.forEach(p=>{const [k,v]=p.split('=');if(k==='v')S.view=v;if(k==='t'&&TYPES[v]){S.type=v;S.today=TYPES[v].moment}if(k==='d')S.today=+v;if(k==='s')S.stress=+v})}
 parseHash();
 
@@ -295,7 +295,7 @@ function flowClose(){ if(S.flow==='calc'||S.flow==='sign'){S.draft=true; toast('
 function submit(){ const RS=resolve(TYPES[S.type]); S.app={product:RS.product,date:dl(S.today,1)}; S.draft=false; flow('done'); }
 function hideOffer(){ S.hidden=true; S.flow=null; toast('Предложения скрыты для группы на 60 дней'); render(); }
 function sendOffer(){ S.view='cfo'; S.cfoTab='home'; S.hidden=false; S.app=null; S.today=TYPES[S.type].moment; S.flow=null; toast('Предложение отправлено. Так его видит финдиректор'); render(); }
-function signPay(i){ toast('Платёж подписан'); }
+function signPay(i){ if(!S.signed.includes(i)){S.signed.push(i); toast('Платёж подписан');} render(); }
 function setProf(k,v){ S.profile[k]=v; S.pop=null; render(); }
 function togglePop(k){ S.pop=S.pop===k?null:k; render(); }
 function terms(){ return S.profile.role==='acc'?TERMS_ACC:TERMS[S.type]; }
@@ -303,7 +303,7 @@ function terms(){ return S.profile.role==='acc'?TERMS_ACC:TERMS[S.type]; }
 function rail(){
   const c=S.rail, Wd=c?84:272, T=TYPES[S.type], ph=phase(T,S.today);
   const offerOn=ph==='speak'&&!S.hidden&&!S.app;
-  const it=[['home','Платёжный календарь',0],['offers','Предложения банка',offerOn?1:0],['apps','Заявки',S.app?1:S.draft?1:0],['comp','Компании и счета',0],['sign','На подпись',3]];
+  const it=[['home','Платёжный календарь',0],['offers','Предложения банка',offerOn?1:0],['apps','Заявки',S.app?1:S.draft?1:0],['comp','Компании и счета',0],['sign','На подпись',3-S.signed.length]];
   let h=`<div class="rail" style="width:${Wd}px;padding-top:24px">`;
   it.forEach(([k,t,b])=>{h+=`<div class="ri ${S.cfoTab===k?'on':''}" data-on="S.cfoTab='${k}';S.flow=null;render()" title="${t}">${ICON[k]}${c?'':`<span>${t}</span>`}${b?`<span class="bdg ${k==='sign'?'g':''}" style="${c?'position:absolute;right:10px;top:8px;min-width:18px;height:18px;font-size:11px':''}">${b}</span>`:''}</div>`;});
   if(!c)h+=`<div style="position:absolute;left:26px;right:26px;bottom:92px;padding-top:20px;border-top:1px solid var(--hair);font-size:15px;line-height:1.4;white-space:normal"><div style="display:flex;align-items:center;gap:10px"><span style="width:7px;height:7px;border-radius:4px;background:#3DBE6A;display:block"></span><b style="font-weight:500">Ольга Петрова</b></div><div style="color:var(--mute);margin-top:2px">ваш менеджер · на связи</div><div style="color:var(--mute);margin-top:10px">${WDF[dt(S.today).getDay()][0].toUpperCase()+WDF[dt(S.today).getDay()].slice(1)}, ${dl(S.today,1)}</div></div>`;
@@ -415,7 +415,8 @@ function cfoPage(T,R,ph,RS,X0,W){
   }
   if(S.cfoTab==='sign'){
     const P=[['Налоги','все компании',1.1,4],['Закупка · «Тракт»','«Вектор Опт»',2.85,5],['Логистика · «Магистраль»','«Вектор Логистик»',1.65,6]];
-    h+=`<div class="caps">На подпись</div><h2 style="margin-top:12px">3 платежа · 5,6 млн ₽</h2><div style="margin-top:36px">${P.map(([n,c,a,d],i)=>`<div class="row2" style="grid-template-columns:200px 1fr 300px 160px 200px"><span style="color:var(--mute);font-size:16px">${dl(d,1)}</span><span>${n}</span><span style="color:var(--mute);font-size:16px">${c}</span><span class="A" style="font-weight:300;font-size:22px">${f1(a)} млн</span><span style="text-align:right"><span class="lnk" style="color:var(--ink);border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:8px 18px" data-on="signPay(${i})">Подписать</span></span></div>`).join('')}</div>`;
+    const left=P.filter((_,i)=>!S.signed.includes(i)), sum=left.reduce((q,x)=>q+x[2],0), nw=n=>n===1?'платёж':(n>=2&&n<=4?'платежа':'платежей');
+    h+=`<div class="caps">На подпись</div><h2 style="margin-top:12px">${left.length?`${left.length} ${nw(left.length)} · ${f1(sum)} млн ₽`:'Все платежи подписаны'}</h2><div style="margin-top:14px;font-size:17px;color:var(--mute)">Подписанный платёж уйдёт в свою дату со счёта компании в Альфе — он уже учтён в платёжном календаре</div><div style="margin-top:30px">${P.map(([n,c,a,d],i)=>{const ok=S.signed.includes(i);return `<div class="row2" style="grid-template-columns:200px 1fr 300px 160px 260px;${ok?'opacity:.5':''}"><span style="color:var(--mute);font-size:16px">${dl(d,1)}</span><span>${n}</span><span style="color:var(--mute);font-size:16px">${c}</span><span class="A" style="font-weight:300;font-size:22px">${f1(a)} млн</span><span style="text-align:right">${ok?`<span style="font-size:16px;color:var(--ink)">✓ Подписано · уйдёт ${dl(d,1)}</span>`:`<span class="lnk" style="color:var(--ink);border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:8px 18px" data-on="signPay(${i})">Подписать</span>`}</span></div>`}).join('')}</div>`;
   }
   return h+'</div>';
 }
@@ -1121,7 +1122,10 @@ function render(){
   st.innerHTML=topbar()+(S.view==='bank'?bank():cfo());
   try{history.replaceState(null,'','#v='+S.view+'&t='+S.type+'&d='+S.today)}catch(e){}
 }
-function fit(){const st=document.getElementById('stage');const k=Math.min(innerWidth/1920,innerHeight/1200);st.style.transform=`scale(${k})`;st.style.left=((innerWidth-1920*k)/2)+'px';st.style.top=((innerHeight-1200*k)/2)+'px'}
+function fit(){const st=document.getElementById('stage');const W=innerWidth,H=innerHeight;
+  if(H>W*1.15&&W<1000){ /* телефон вертикально — разворачиваем экран боком на всю высоту */
+    const k=Math.min(W/1200,H/1920);const l=(W-1200*k)/2,t=(H-1920*k)/2;st.style.left='0px';st.style.top='0px';st.style.transform=`translate(${l+1200*k}px,${t}px) rotate(90deg) scale(${k})`;
+  } else {const k=Math.min(W/1920,H/1200);st.style.transform=`scale(${k})`;st.style.left=((W-1920*k)/2)+'px';st.style.top=((H-1200*k)/2)+'px'}}
 addEventListener('resize',fit);addEventListener('hashchange',()=>{parseHash();render()});
 fit();render();
 </script>
