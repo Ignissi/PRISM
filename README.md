@@ -1,32 +1,41 @@
-# PRISM — Tell me how you don't pay, and we'll be there right on time
+<div align="center">
 
-**Alfa-Bank case school · Team 52**
+# PRISM
 
-Interactive prototype: **open `index.html` via GitHub Pages** (link in the repository description / About).
+### Скажи, как ты не платишь, — и мы придём вовремя
 
-## Idea
+**Команда 52** · Кейс-школа Альфа-Банка
 
-The bank already knows *whom* to offer and *what*. PRISM adds *when*.
-From the payment flow we see how a CFO survived a cash gap — whom they paid late, what they split, what they covered from reserves — and offer the right product on the right day:
+Анжелика Михеева — *Tech (ML) & Architect*  
+Клементий Кочешков — *Product*
 
-| Type | How they don't pay | Product | When |
+**[Открыть прототип →](https://ignissi.github.io/PRISM/)**
+
+</div>
+
+---
+
+Интерактивный прототип — **[ignissi.github.io/PRISM](https://ignissi.github.io/PRISM/)**, открывается в браузере без входа.
+
+## Идея
+
+Банк уже знает, *кому* и *что* предложить. PRISM добавляет *когда*.
+По платежам мы видим, как финдиректор пережил нехватку денег — кому заплатил позже, что раздробил, что закрыл из резерва — и предлагаем нужный продукт в нужный день:
+
+| Тип | Как не платит | Продукт | Когда |
 |---|---|---|---|
-| A | delays suppliers | Factoring of the next shipment | right after the money arrives |
-| B | covers everything from own reserve | Credit line | a week later |
-| C | splits payments | Overdraft | a week before the next gap |
-| D | stuck, no money at all | Short-term working capital (after limit and risk check) | 2nd day of the delay |
-| E | surplus | Deposit | after the payout peak |
+| A | сдвигает поставщиков | Факторинг следующей поставки | сразу после поступления денег |
+| B | закрывает всё из своего резерва | Кредитная линия | через неделю |
+| C | дробит платежи | Овердрафт | за неделю до следующего разрыва |
+| D | застрял, денег нет совсем | Оборотный кредит до поступления (после проверки лимита и риска) | 2-й день задержки |
+| E | профицит | Депозит | после пика выплат |
 
-While the money is on its way — no advertising.
+Пока деньги в пути — никакой рекламы.
 
-## Prototype
+## Прототип
 
-- Two cabinets: **CFO** (Alfa-Boss payment calendar) and **bank manager** (why now, what it means for Alfa, send offer).
-- Switch types A–E and the CRM profile (industry, role, structure, digital activity) — product, text, channel and frequency change.
-- Application path inside the cabinet: terms → ready calculation → application; the interface reacts to hesitation (hint, comparison, draft).
+- Два кабинета: **финдиректор** (платёжный календарь в Альфа-Боссе) и **менеджер банка** (почему сейчас, что это значит для Альфы, отправить предложение).
+- Переключайте типы A–E и профиль CRM (отрасль, роль, структура, цифровая активность) — меняются продукт, текст, канал и частота.
+- Путь к заявке внутри кабинета: условия → готовый расчёт → заявка; интерфейс реагирует на сомнение (подсказка, сравнение, черновик).
 
-**All data in the prototype is synthetic.**
-
-## Team
-
-Anzhelika Mikheeva — Tech (ML) & Architect · Klementiy Kocheshkov — Product
+**Все данные в прототипе синтетические.**
